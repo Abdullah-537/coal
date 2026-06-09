@@ -2239,3 +2239,77 @@ main ENDP
 END main
 
 
+
+
+
+
+
+////add 2 arrays////
+
+
+ORG 100h
+
+.DATA
+    ; Pehla array
+    array1  DB 1, 2, 3, 4, 5          
+    
+    ; Doosra array (Inhe hum plus karenge)
+    array2  DB 4, 3, 2, 5, 1          
+    
+    ; Teesra array jisme final result save hoga (Shuru me sab 0 hain)
+    sum_arr DB 5 DUP(0)               
+    
+    n       EQU 5                     ; Array ka size (Total 5 elements)
+    
+    msg     DB 'Result Array is: $'
+    space   DB ' $'
+
+.CODE
+main PROC
+    MOV AX, @DATA
+    MOV DS, AX
+
+    MOV CX, n                         ; Counter CX = 5 set kiya
+    MOV SI, 0                         ; Index SI = 0 (Dono arrays ke pehle element ke liye)
+
+add_loop:
+    MOV AL, [array1+SI]               ; Array1 ka element AL register mein uthaya
+    ADD AL, [array2+SI]               ; Usme Array2 ka element plus kar diya
+    
+    MOV [sum_arr+SI], AL              ; Final sum ko teesre array (sum_arr) mein save kiya
+    
+    INC SI                            ; Index ko 1 se badhaya taaki agle element par ja sakein
+    LOOP add_loop                     ; 5 baar ghoomegha jab tak CX = 0 na ho jaye
+
+    ; =======================================================
+    ; DISPLAY SECTION: RESULT ARRAY KO PRINT KARNA
+    ; =======================================================
+    LEA DX, msg
+    MOV AH, 09h
+    INT 21h                           ; Result text print kiya
+
+    MOV CX, n                         ; Reset counter to 5 for printing
+    MOV SI, 0                         ; Reset index to 0
+
+print_loop:
+    MOV DL, [sum_arr+SI]              ; Result array se ek element DL mein nikala
+    ADD DL, '0'                       ; ASCII character mein badla
+    MOV AH, 02h
+    INT 21h                           ; Digit print kiya
+
+    ; Ginti ke beech mein space dene ke liye
+    LEA DX, space
+    MOV AH, 09h
+    INT 21h
+
+    INC SI                            ; Agle index par jao
+    LOOP print_loop                   ; 5 baar chalega
+
+exit_prog:
+    ; Program Terminate
+    MOV AH, 4Ch
+    INT 21h
+main ENDP
+END main
+
+
