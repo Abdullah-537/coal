@@ -1,0 +1,2241 @@
+print a:
+
+
+
+
+
+mov ah,02h 
+ mov dl,41h
+
+int 21h
+
+
+
+
+
+print 2 numbers using ror and shr
+
+org 100h          ; DOS COM file ka standard starting point
+
+MAIN:
+    MOV AL, 10000001b   ; AL me binary value 81h save ki
+    ROR AL, 1           ; AL ko right side rotate kiya 1 bit (Ab AL = C0h ho gaya)
+    
+    MOV BL, AL          ; Final AL ki value ko BL me safe rakh liya baad ke liye
+
+    ; --- UPPER part ('C') ko isolate aur print karne ke liye ---
+    MOV AL, BL          ; BL se value wapas AL me laye
+    SHR AL, 4           ; Right shift kiya 4 bits taake shuru ka 'C' bache (AL = 0Ch)
+    CALL PRINT_HEX_DIGIT
+
+    ; --- LOWER part ('0') ko isolate aur print karne ke liye ---
+    MOV AL, BL          ; BL se value phir se AL me laye
+    AND AL, 0Fh         ; Masking ki taake sirf aakhri ka '0' bache (AL = 00h)
+    CALL PRINT_HEX_DIGIT
+
+    ; --- Program Khatam ---
+    MOV AH, 4Ch         ; DOS exit function
+    INT 21h
+
+; --- Subroutine: AL ke 4-bit number ko ASCII character me badal kar print karega ---
+PRINT_HEX_DIGIT:
+    CMP AL, 9           ; Check karo ke number 9 se chota hai ya bada
+    JBE ADD_ZERO        ; Agar 9 ya usse chota hai, to seedha ADD_ZERO par jump karo
+    ADD AL, 7           ; Agar A-F ke beech hai, to 7 add karo taake ASCII table me 'A' tak pohanch sake
+ADD_ZERO:
+    ADD AL, '0'         ; '0' (30h) add kiya taake proper ASCII value ban jaye
+    
+    ; DOS use karke character screen par print karna
+    MOV DL, AL          ; Character ko DL register me dala kyunki printing ke liye ye zaroori hai
+    MOV AH, 02h         ; DOS function 2: Screen par single character dikhane ke liye
+    INT 21h             ; Interrupt call kiya
+    RET                 ; Wapas main code me jao
+
+
+
+
+
+
+add two and subtract using the functions
+org 100h          ; DOS COM file ka standard start
+
+MAIN:
+    ; --- ADD A and B ---
+    MOV AL, A   ; Variable A ki value ko AL register me dala
+    ADD AL, B   ; AL me variable B ki value ko plus (add) kiya
+    MOV RES_ADD, AL ; Result ko RES_ADD variable me save kar diya
+
+    ; --- SUB B from A ---
+    MOV AL, A   ; AL register me dobara A ki value ko dala
+    SUB AL, B   ; AL mese B ki value ko minus (subtract) kiya (A - B)
+    MOV RES_SUB, AL ; Result ko RES_SUB variable me save kar diya
+
+
+    ; =========================================================
+    ; PRINTING SECTION (Screen par dikhane ke liye)
+    ; =========================================================
+
+    ; --- 1. ADD ka result print karein ---
+    MOV AL, RES_ADD   ; ADD ka result AL me dala
+    CALL PRINT_HEX_BYTE ; Isko print karne ke liye subroutine call ki
+    CALL PRINT_SPACE    ; Beech me thodi jagah (space) dene ke liye
+
+    ; --- 2. SUB ka result print karein ---
+    MOV AL, RES_SUB   ; SUB ka result AL me dala
+    CALL PRINT_HEX_BYTE ; Isko print karne ke liye subroutine call ki
+
+    HLT                 ; Program ko yahan rok diya (Halt)
+
+
+; =========================================================
+; SUBROUTINES (Funtions)
+; =========================================================
+
+; --- Pure 8-bit Byte ko Hex me print karne ka function ---
+PRINT_HEX_BYTE:
+    MOV BL, AL          ; AL ki asli value BL me safe kar li
+    
+    ; Shuru ka 4-bit (Upper Nibble) print karo
+    SHR AL, 4           ; Right shift 4 bits (AL = 01h ho jayega agar 1Ah ho)
+    CALL PRINT_DIGIT    ; Ek digit print karne wale function ko call kiya
+    
+    ; Aakhri ka 4-bit (Lower Nibble) print karo
+    MOV AL, BL          ; Value wapas AL me laye
+    AND AL, 0Fh         ; Sirf aakhri 4 bits bachaye (0Fh filter use kiya!)
+    CALL PRINT_DIGIT    ; Doosra digit print kiya
+    RET
+
+; --- Single 4-bit Digit ko ASCII me badal kar print karne ka function ---
+PRINT_DIGIT:                                        
+    CMP AL, 9           ; Check karo 9 se bada hai ya chota
+    JBE ADD_ZERO        ; Agar 9 ya chota hai to jump karo
+    ADD AL, 7           ; Agar A-F hai to 7 add karo gap khatam karne ke liye
+ADD_ZERO:
+    ADD AL, '0'         ; '0' (30h) add kiya ASCII banane ke liye
+    MOV DL, AL          ; Character DL me dala
+    MOV AH, 02h         ; DOS print character function
+    INT 21h             ; Screen par dikhao
+    RET
+
+; --- Do answers ke beech me space print karne ka function ---
+PRINT_SPACE:
+    MOV DL, ' '         ; Space character DL me dala
+    MOV AH, 02h         ; DOS print function
+    INT 21h
+    RET
+
+
+; =========================================================
+; DATA SECTION (Variables)
+; =========================================================
+A       DB 15h          ; Pehla variable A (Value: 15h yaani decimal ka 21)
+B       DB 05h          ; Doosra variable B (Value: 05h yaani decimal ka 5)
+
+RES_ADD DB 0            ; ADD ka result save karne ki jagah
+RES_SUB DB 0            ; SUB ka result save karne ki jagah
+
+
+
+//////ADDING WORD////////////
+org 100h          ; DOS COM file ka standard start
+
+MAIN:
+    ; --- WORD Variables ko ADD karna ---
+    MOV AX, [A]   ; 16-bit WORD variable A ki value ko AX register me dala
+    ADD AX, [B]   ; AX register me variable B ki value ko plus (add) kiya
+    MOV [RES], AX ; Final result (jawab) ko RES variable me save kar diya
+
+    ; --- Program ko tameez se khatam karne ke liye ---
+    MOV AH, 4Ch   ; DOS exit function
+    INT 21h
+
+; =========================================================
+; DATA SECTION (Variables)
+; =========================================================
+; Chunki WORD 16-bit ka hota hai, isliye hum 'DW' (Define Word) use karenge
+
+A   DW 1234h      ; Pehla 16-bit WORD variable (Hex value: 1234h)
+B   DW 0012h      ; Doosra 16-bit WORD variable (Hex value: 0012h)
+
+RES DW ?          ; Jawab save karne ke liye khali WORD variable (? ka matlab khali)
+
+
+
+
+
+/////shl on word/////
+org 100h          ; DOS COM file ka standard start
+
+MAIN:
+    MOV AX, [NUM] ; WORD variable ki value ko AX (16-bit register) me dala
+    SHL AX, 1     ; AX ki value ko left side par 1 bit shift kiya
+    MOV [RES], AX ; Jo naya result aaya, usko RES variable me save kar diya
+
+    ; --- Program Exit ---
+    MOV AH, 4Ch   
+    INT 21h
+
+; =========================================================
+; DATA SECTION (Variables)
+; =========================================================
+NUM DW 1234h      ; Ek WORD variable banaya (Hex value: 1234h)
+RES DW ?          ; Result store karne ke liye khali WORD variable
+
+
+
+
+///print separate  dd////
+org 100h
+
+MAIN:
+    ; --- 1. Lower 16 bits ko AX me lana ---
+    MOV AX, WORD PTR [MY_DWORD]     
+    MOV [LOW_WORD], AX              
+
+    ; --- 2. Upper 16 bits ko BX me lana ---
+    MOV BX, WORD PTR [MY_DWORD + 2] 
+    MOV [HIGH_WORD], BX             
+
+
+    ; =========================================================
+    ; PRINTING SECTION (Screen par dikhane ke liye)
+    ; =========================================================
+
+    ; --- Pehle Upper 16 Bits Print Karein ---
+    MOV AX, [HIGH_WORD]
+    CALL PRINT_HEX_WORD
+    
+    ; Beech me thodi jagah (space) dene ke liye
+    CALL PRINT_SPACE
+
+    ; --- Phir Lower 16 Bits Print Karein ---
+    MOV AX, [LOW_WORD]
+    CALL PRINT_HEX_WORD
+
+    ; --- Program Exit ---
+    MOV AH, 4Ch
+    INT 21h
+
+
+; =========================================================
+; SUBROUTINES (Functions)
+; =========================================================
+
+; --- Pure 16-bit WORD ko Hex me print karne ka function ---
+PRINT_HEX_WORD:
+    MOV CX, AX          ; Asli value ko CX me safe kar liya
+
+    ; 1st Digit (Sab se shuru ka): Bits 12-15
+    SHR AX, 12          ; 12 bits right shift kiya
+    CALL PRINT_DIGIT
+
+    ; 2nd Digit: Bits 8-11
+    MOV AX, CX          ; Value wapas laye
+    SHR AX, 8           ; 8 bits right shift kiya
+    AND AX, 0Fh         ; Sirf aakhri digit bachaya
+    CALL PRINT_DIGIT
+
+    ; 3rd Digit: Bits 4-7
+    MOV AX, CX          ; Value wapas laye
+    SHR AX, 4           ; 4 bits right shift kiya
+    AND AX, 0Fh         ; Sirf aakhri digit bachaya
+    CALL PRINT_DIGIT
+
+    ; 4th Digit (Sab se aakhri): Bits 0-3
+    MOV AX, CX          ; Value wapas laye
+    AND AX, 0Fh         ; 0Fh filter lagaya
+    CALL PRINT_DIGIT
+    RET
+
+; --- Single 4-bit Digit ko ASCII me badal kar print karne ka function ---
+PRINT_DIGIT:
+    CMP AL, 9           
+    JBE ADD_ZERO        
+    ADD AL, 7           
+ADD_ZERO:
+    ADD AL, '0'         
+    MOV DL, AL          
+    MOV AH, 02h         
+    INT 21h             
+    RET
+
+; --- Space print karne ka function ---
+PRINT_SPACE:
+    MOV DL, ' '         
+    MOV AH, 02h         
+    INT 21h
+    RET
+
+
+; =========================================================
+; DATA SECTION (Variables)
+; =========================================================
+MY_DWORD   DD 12345678h      
+
+LOW_WORD   DW ?              
+HIGH_WORD  DW ?
+
+
+
+
+//using macro///////
+org 100h
+
+; =========================================================
+; MACRO DEFINITION (Pehle macro define karna hota hai)
+; =========================================================
+BITWISE_AND MACRO num1, num2, res
+    MOV AL, num1        ; Pehle number (num1) ko AL register me dala
+    AND AL, num2        ; AL ko doosre number (num2) ke saath AND kiya
+    MOV res, AL         ; Result ko res variable me save kar diya
+ENDM                    ; Macro yahan khatam (End Macro)
+
+
+; =========================================================
+; MAIN PROGRAM
+; =========================================================
+MAIN:
+    ; Task ke mutabik macro ko 0F0h aur 0AAh ke saath call kiya
+    ; Aur result ko 'RESULT' naam ke variable me bhej diya
+    BITWISE_AND 0F0h, 0AAh, [RESULT]
+
+    ; --- Result ko screen par dikhane ke liye (Printing) ---
+    MOV AL, [RESULT]    ; Result ko AL me laya
+    CALL PRINT_HEX_BYTE ; Print karne ka function call kiya
+
+    ; --- Program Exit ---
+    MOV AH, 4Ch
+    INT 21h
+
+
+; =========================================================
+; SUBROUTINES (Printing Functions)
+; =========================================================
+PRINT_HEX_BYTE:
+    MOV BL, AL
+    SHR AL, 4           ; Shuru ka digit alag kiya
+    CALL PRINT_DIGIT
+    MOV AL, BL
+    AND AL, 0Fh         ; Aakhri digit alag kiya (0Fh filter)
+    CALL PRINT_DIGIT
+    RET
+
+PRINT_DIGIT:
+    CMP AL, 9
+    JBE ADD_ZERO
+    ADD AL, 7
+ADD_ZERO:
+    ADD AL, '0'
+    MOV DL, AL
+    MOV AH, 02h
+    INT 21h
+    RET
+
+
+; =========================================================
+; DATA SECTION (Variables)
+; =========================================================
+RESULT DB ?             ; Macro ka jawab save karne ke liye khali variable
+
+
+
+///toggle bit macro/////
+org 100h
+
+toggle_bits macro value, res
+    mov al, value
+    xor al, 0FFh        ; <-- Correction: offh ko 0FFh kiya (shuru mein zero lagaya)
+    mov res, al
+endm
+
+main:
+    toggle_bits 0f0h, [res] ; <-- Correction: [res] par brackets lagaye
+    
+    mov al, [res]       ; <-- Correction: print karne se pehle value AL mein laye
+    call print_hex
+    
+    ; --- Correction: Program ko tameez se exit kiya ---
+    mov ah, 4ch         
+    int 21h
+
+print_hex:
+    mov bl, al
+    shr al, 4
+    call print_dig
+    mov al, bl
+    and al, 0fh
+    call print_dig
+    ret
+
+print_dig:
+    cmp al, 9
+    jbe add_zero
+    add al, 7  
+add_zero:
+    add al, '0'
+    mov dl, al
+    mov ah, 02h
+    int 21h
+    ret
+
+res db ?
+
+
+
+
+
+
+
+///shr shl condition base////
+org 100h
+
+shift_op macro num, op, res
+    local if_shl, exit_macro 
+    
+    mov al, num
+    
+    ; ERROR FIXED HERE: Pehle 'op' ko register me daala
+    mov ah, op          
+    cmp ah, 0          ; Ab yeh 'cmp ah, 0' banega, jo ki 100% valid hai!
+    je if_shl          
+    
+    shr al, 1          
+    jmp exit_macro     
+
+if_shl:
+    shl al, 1          
+
+exit_macro:
+    mov res, al        
+endm
+
+main:
+    ; --- Test Case 1: SHL with 08h (op = 0) ---
+    shift_op 08h, 0, res
+    mov al, res
+    call print_hex     ; Screen par '10' print hoga
+
+    ; Space print karne ke liye
+    mov dl, ' '
+    mov ah, 02h
+    int 21h
+
+    ; --- Test Case 2: SHR with 08h (op = 1) ---
+    shift_op 08h, 1, res
+    mov al, res
+    call print_hex     ; Screen par '04' print hoga
+    
+    hlt                
+
+print_hex:
+    mov bl, al
+    shr al, 4
+    call print_dig
+    mov al, bl
+    and al, 0fh
+    call print_dig
+    ret
+
+print_dig:
+    cmp al, 9
+    jbe add_zero
+    add al, 7
+add_zero:
+    add al, '0'
+    mov dl, al
+    mov ah, 02h
+    int 21h  
+    ret                    
+
+res db ?               
+end main
+
+
+//////add with carry/////
+.model small
+.data 
+jmp start
+a db 2
+b db 3
+res db ?
+res2 db ?
+.code  
+start:
+main proc
+        mov ax,@data
+        mov ds,ax
+        
+        
+        mov al,a
+        add al,b
+        mov res,al
+        stc 
+        mov al,2
+        adc al,b
+        mov res2,al
+main endp
+end  main
+        
+
+
+//char input and print////
+ORG 100h ; Program starts at address 100h (for COM file)
+MOV AH, 01h ; DOS interrupt for character input
+INT 21h ; Read character from keyboard
+MOV BL, AL ; Store input character in BL register
+
+MOV DL, 0Ah ; Move newline
+ MOV AH, 02h ;
+
+INT 21h ; Print newline
+MOV DL, BL ; Move stored character
+
+INT 21h ; Print the character
+MOV AH, 4Ch ;
+INT 21h
+
+
+
+
+
+
+
+
+///character input with prompt and print//////
+org 100h
+
+
+.data
+message db 'enetr $'
+message2 db 'u enetred: $'
+
+
+.code
+main proc   
+    mov ax,@data
+    mov dx,ax  
+    mov dx,offset message
+    mov ah,09h
+    int 21h
+    mov ah,01h   
+    int 21h   
+        mov bl,al 
+    mov dl,0ah  
+    mov ah,02h
+    int 21h 
+    mov dx,offset message
+    mov ah,09h
+    int 21h
+    mov dl,bl
+    mov ah,02h
+    int 21h
+
+    
+    
+///print hex to decimal///////
+ORG 100h
+
+; =======================================================
+; MACRO: CONVERT ANY HEX TO DECIMAL (NO STACK, NO LOOP)
+; =======================================================
+Print_Decimal_Dynamic macro hexVal
+    ; Registers ka data safe karne ke liye variables use kiye (No Stack)
+    MOV temp_ax, AX
+    MOV temp_bx, BX
+    MOV temp_dx, DX
+
+    MOV AL, hexVal       ; Number ko AL me load kiya
+    MOV AH, 0            ; AH clear kiya (AX = 0000 8-bit number)
+    
+    MOV BL, 10           ; Divisor = 10
+
+    ; --- Step 1: Pehla Division (Aakhri digit ke liye) ---
+    DIV BL               ; AX / 10 -> AL = Quotient, AH = Remainder
+    MOV d3, AH           ; Aakhri digit ko d3 me save kiya (Units)
+    
+    ; --- Step 2: Doosra Division (Beech ke digit ke liye) ---
+    MOV AH, 0            ; Clear AH
+    DIV BL               ; AX / 10 -> AL = Hundred's, AH = Ten's
+    MOV d2, AH           ; Beech ke digit ko d2 me save kiya (Tens)
+    
+    ; --- Step 3: bacha hua Quotient hi pehla digit hai ---
+    MOV d1, AL           ; Pehle digit ko d1 me save kiya (Hundreds)
+
+    ; --- Step 4: Simple Line-by-Line Printing (No Loop) ---
+    ; 1st Digit Print Karo
+    MOV DL, d1
+    ADD DL, '0'          ; ASCII me badla
+    MOV AH, 02h
+    INT 21h
+
+    ; 2nd Digit Print Karo
+    MOV DL, d2
+    ADD DL, '0'
+    MOV AH, 02h
+    INT 21h
+
+    ; 3rd Digit Print Karo
+    MOV DL, d3
+    ADD DL, '0'
+    MOV AH, 02h
+    INT 21h
+
+    ; Ek space print karo dono numbers ke beech me
+    MOV DL, ' '
+    MOV AH, 02h
+    INT 21h
+
+    ; Registers ka data bina stack ke wapas le aaye
+    MOV AX, temp_ax
+    MOV BX, temp_bx
+    MOV DX, temp_dx
+ENDM
+
+; =======================================================
+; MAIN PROGRAM
+; =======================================================
+main:
+    MOV BL, 0Ah          ; Start with value 10 (0Ah)
+
+    ; Test Case 1: Print 10
+    Print_Decimal_Dynamic BL
+
+    ; Test Case 2: Increase by 1 and Print 11
+    INC BL
+    Print_Decimal_Dynamic BL
+
+    ; Test Case 3: Increase by 1 and Print 12
+    INC BL
+    Print_Decimal_Dynamic BL
+
+    ; DOS Terminate
+    MOV AH, 4CH
+    INT 21H
+
+; --- DATA SECTION (Variables) ---
+d1 db ?                  ; Hundred's digit storage
+d2 db ?                  ; Ten's digit storage
+d3 db ?                  ; Unit's digit storage
+
+; Stack ke badle registers safe rakhne ke liye temporary space
+temp_ax dw ?
+temp_bx dw ?
+temp_dx dw ?
+
+end main
+
+
+
+
+
+
+
+
+/////print for port and output//////
+
+org 100h
+
+MAIN:
+    ; --- 1. Direct Addressing se Port 05h se read karna ---
+    IN AL, 05h          ; Direct Port 05h se 1 byte data AL register me read kiya
+
+    ; --- 2. Wahi value ko Direct Addressing se Port 06h par write karna ---
+    OUT 06h, AL         ; AL ki value ko direct Port 06h par bhej (write) diya
+
+    ; --- 3. Indirect Addressing (DX register) use karke read karna ---
+    MOV DX, 05h         ; Pehle Port ka address (05h) DX register me dala
+    IN AL, DX           ; DX me jo address hai, us port se data AL me read kiya (Indirect)
+    
+    MOV PORT_VAL, AL  ; Read kiye gaye data ko memory variable me safe kar liya
+
+    ; --- 4. Read kiye gaye data ko screen par display karna ---
+    MOV AL, PORT_VAL  ; Value ko wapas AL me laye
+    CALL PRINT_HEX_BYTE ; Screen par Hex format me dikhane ke liye function call kiya
+
+    ; --- Program Exit ---
+    MOV AH, 4Ch
+    INT 21h
+
+
+; =========================================================
+; SUBROUTINES (Printing Functions)
+; =========================================================
+PRINT_HEX_BYTE:
+    MOV BL, AL
+    SHR AL, 4           ; Upper nibble (Shuru ka digit)
+    CALL PRINT_DIGIT
+    MOV AL, BL
+    AND AL, 0Fh         ; Lower nibble (Aakhri digit using 0Fh filter)
+    CALL PRINT_DIGIT
+    RET
+
+PRINT_DIGIT:
+    CMP AL, 9
+    JBE ADD_ZERO
+    ADD AL, 7
+ADD_ZERO:
+    ADD AL, '0'
+    MOV DL, AL
+    MOV AH, 02h         ; DOS display character function
+    INT 21h
+    RET
+
+
+; =========================================================
+; DATA SECTION (Variables)
+; =========================================================
+PORT_VAL DB ?           ; Port se read kiya hua data save karne ke liye
+
+
+
+////separate 100 and print/////
+org 100h
+
+; =========================================================
+; MACRO DEFINITION: CONVERT_TO_DEC8_FULL (NO STACK)
+; =========================================================
+CONVERT_TO_DEC8_FULL MACRO value
+    ; Stack operations (PUSH) yahan se hata diye hain
+    
+    MOV AL, value       ; Asli number ko AL me laya
+    MOV AH, 0           ; AH ko 0 kiya taake 16-bit division (AX / BL) ho sake
+    
+    ; --- 1. Hundreds Nikalna ---
+    MOV BL, 100         ; BL me 100 dala
+    DIV BL              ; AX ko 100 se divide kiya. AL = Hundreds, AH = Remainder
+    MOV DL, AL          ; Hundreds digit ko DL me dala
+    ADD DL, '0'         ; ASCII me badla
+    MOV DH, AH          ; Remainder (Tens + Ones) ko safe kar liya DH me
+    MOV AH, 02h         ; DOS Character Print function
+    INT 21h             ; Hundreds digit print ho gaya
+
+    ; --- 2. Tens aur Ones Nikalna ---
+    MOV AL, DH          ; Bacha hua remainder AL me laya
+    MOV AH, 0           ; Clear AH
+    MOV BL, 10          ; BL me 10 dala
+    DIV BL              ; AL = Tens, AH = Ones
+    
+    ; Tens print karo
+    MOV DL, AL          ; Tens digit DL me laya
+    ADD DL, '0'         ; ASCII me badla
+    MOV CL, AH          ; Ones (remainder) ko CL me safe kiya
+    MOV AH, 02h
+    INT 21h             ; Tens digit print ho gaya
+
+    ; Ones print karo
+    MOV DL, CL          ; Ones digit DL me laya
+    ADD DL, '0'         ; ASCII me badla
+    MOV AH, 02h
+    INT 21h             ; Ones digit print ho gaya
+
+    ; Stack operations (POP) yahan se bhi hata diye hain
+ENDM
+
+
+; =========================================================
+; MAIN PROGRAM (Manual Simulation Without Loops)
+; =========================================================
+MAIN:
+    ; --- Step 1: Shuruati value (Initial Value = 198) ---
+    MOV AL, 198
+    MOV [VAL], AL
+    CONVERT_TO_DEC8_FULL [VAL]  ; Display karega: 198
+    CALL PRINT_NEWLINE
+
+    ; --- Step 2: Value me 1 plus kiya (198 + 1 = 199) ---
+    ADD [VAL], 1
+    CONVERT_TO_DEC8_FULL [VAL]  ; Display karega: 199
+    CALL PRINT_NEWLINE
+
+    ; --- Step 3: Value me 1 aur plus kiya (199 + 1 = 200) ---
+    ADD [VAL], 1
+    CONVERT_TO_DEC8_FULL [VAL]  ; Display karega: 200
+    CALL PRINT_NEWLINE
+
+    ; --- Step 4: Value me 1 aur plus kiya (200 + 1 = 201) ---
+    ADD [VAL], 1
+    CONVERT_TO_DEC8_FULL [VAL]  ; Display karega: 201
+    CALL PRINT_NEWLINE
+
+    ; --- Program Exit ---
+    MOV AH, 4Ch
+    INT 21h
+
+
+; =========================================================
+; SUBROUTINES (Helper Functions)
+; =========================================================
+PRINT_NEWLINE:          
+    MOV DL, 0Dh         ; Carriage Return
+    MOV AH, 02h
+    INT 21h
+    MOV DL, 0Ah         ; Line Feed
+    MOV AH, 02h
+    INT 21h
+    RET
+
+
+; =========================================================
+; DATA SECTION
+; =========================================================
+VAL DB ?
+
+
+
+
+
+
+////loqwer to upper///////
+org 100h
+
+; =========================================================
+; MACRO DEFINITION: TO_UPPER
+; =========================================================
+TO_UPPER MACRO
+    ; --- 1. User se character input lena ---
+    MOV AH, 01h         ; DOS input character function
+    INT 21h             ; Input lene ke baad character 'AL' register me aa jata hai
+
+    ; --- 2. Check karna ke character 'a' se 'z' ke beech hai ya nahi ---
+    CMP AL, 'a'         ; AL ko 'a' (61h) se compare kiya
+    JB NOT_LOWER        ; Agar 'a' se chota hai (ASCII < 61h), to skip karo
+    
+    CMP AL, 'z'         ; AL ko 'z' (7Ah) se compare kiya
+    JA NOT_LOWER        ; Agar 'z' se bada hai (ASCII > 7Ah), to skip karo
+
+    ; --- 3. Lowercase ko Uppercase me badalna ---
+    SUB AL, 20h         ; Agar 'a'-'z' ke beech hai, to 20h minus kar ke Uppercase banao
+
+NOT_LOWER:
+    ; --- 4. Character ko screen par display karna ---
+    MOV DL, AL          ; Character ko DL register me dala print karne ke liye
+    MOV AH, 02h         ; DOS display character function
+    INT 21h             ; Screen par output dikhao
+ENDM
+
+
+; =========================================================
+; MAIN PROGRAM
+; =========================================================
+MAIN:
+    ; Macro ko call kiya
+    TO_UPPER            
+
+    ; --- Program Exit ---
+    MOV AH, 4Ch
+    INT 21h
+
+
+
+
+/////16 bits decimal ////////
+org 100h
+
+; =========================================================
+; MACRO DEFINITION: CONVERT_TO_DEC16 (NO STACK)
+; =========================================================
+; Ye macro AX register ke 16-bit number ko 5 decimal digits me torta hai.
+CONVERT_TO_DEC16 MACRO
+    ; --- 1. Ten Thousands Digit (10000) ---
+    MOV DX, 0           ; DX:AX doubleword division ke liye DX ko clear kiya
+    MOV BX, 10000       ; BX me 10000 dala
+    DIV BX              ; DX:AX / BX -> AX = Quotient, DX = Remainder
+    MOV CX, DX          ; Remainder ko CX me safe kar liya
+    MOV DL, AL          ; Ten Thousands digit ko DL me dala
+    ADD DL, '0'         ; ASCII me badla
+    MOV AH, 02h         ; DOS print function
+    INT 21h
+
+    ; --- 2. Thousands Digit (1000) ---
+    MOV AX, CX          ; Bacha hua remainder AX me laya
+    MOV DX, 0           ; DX clear kiya
+    MOV BX, 1000        ; BX me 1000 dala
+    DIV BX              ; AX = Quotient, DX = Remainder
+    MOV CX, DX          ; Remainder ko CX me safe kiya
+    MOV DL, AL          ; Thousands digit DL me dala
+    ADD DL, '0'         
+    MOV AH, 02h         
+    INT 21h
+
+    ; --- 3. Hundreds Digit (100) ---
+    MOV AX, CX          ; Remainder AX me laya
+    MOV DX, 0
+    MOV BX, 100         ; BX me 100 dala
+    DIV BX              ; AX = Quotient, DX = Remainder
+    MOV CX, DX          ; Remainder ko CX me safe kiya
+    MOV DL, AL          ; Hundreds digit DL me dala
+    ADD DL, '0'         
+    MOV AH, 02h         
+    INT 21h
+
+    ; --- 4. Tens aur Ones Digits (10) ---
+    MOV AX, CX          ; Remainder AX me laya
+    MOV BL, 10          ; Ab sirf 8-bit division kaafi hai (AX / BL)
+    DIV BL              ; AL = Tens (Quotient), AH = Ones (Remainder)
+    MOV CL, AH          ; Ones digit ko CL me safe kiya
+    
+    ; Tens print karo
+    MOV DL, AL          
+    ADD DL, '0'         
+    MOV AH, 02h         
+    INT 21h
+
+    ; Ones print karo
+    MOV DL, CL          
+    ADD DL, '0'         
+    MOV AH, 02h         
+    INT 21h
+ENDM
+
+
+; =========================================================
+; MAIN PROGRAM
+; =========================================================
+MAIN:
+    ; --- 1. Do 8-bit values ko Multiply karna ---
+    MOV AL, [NUM1]      ; AL me pehli 8-bit value dali (255)
+    MOV BL, [NUM2]      ; BL me doosri 8-bit value dali (255)
+    MUL BL              ; AL * BL -> Answer automatic AX me chala gaya (65025)
+
+    ; --- 2. Macro ko call karna display ke liye ---
+    CONVERT_TO_DEC16    ; AX me moojood answer ko decimal me print karega
+
+    ; --- Program Exit ---
+    MOV AH, 4Ch         
+    INT 21h
+
+
+; =========================================================
+; DATA SECTION (Variables)
+; =========================================================
+NUM1 DB 255             ; Pehli 8-bit value (Decimal 255 = FFh)
+NUM2 DB 255             ; Doosri 8-bit value (Decimal 255 = FFh)
+
+
+
+
+////multiply and store in ax ///////
+
+org 100h
+
+MAIN:
+    ; --- 1. Registers mein 8-bit numbers load karna ---
+    MOV AL, [NUM1]      ; AL register mein pehli 8-bit value dali (12h)
+    MOV BL, [NUM2]      ; BL register mein doosri 8-bit value dali (05h)
+
+    ; --- 2. Multiply karna ---
+    MUL BL              ; AL aur BL multiply honge (12h * 05h)
+                        ; Result automatic AX register mein save ho jayega
+
+    ; --- 3. Result ko memory mein store karna ---
+    MOV [RES], AX       ; AX mein moojood 16-bit result ko RES variable mein save kiya
+    
+NUM1 DB 12h             ; Pehli 8-bit value (Hex: 12h = Decimal: 18)
+NUM2 DB 05h             ; Doosri 8-bit value (Hex: 05h = Decimal: 5)
+
+RES  DW ?               ; 16-bit result save karne ke liye WORD variable
+
+
+
+
+/////divide by 5 ////////
+org 100h
+
+MAIN:
+    ; --- 1. Registers mein data set karna ---
+    MOV AX, [NUM]       ; Jis number ko divide karna hai use AX mein dala (e.g., 43)
+    MOV BL, 5           ; Jis se divide karna hai use BL mein dala (5)
+
+    ; --- 2. Division perform karna ---
+    DIV BL              ; AX / BL (43 / 5)
+                        ; AL = Quotient (Jawab), AH = Remainder (Baqi)
+
+    MOV [QUOTIENT], AL  ; Quotient ko memory variable mein save kar liya
+
+    
+    MOV AL, [QUOTIENT]  
+    MOV AH, 0
+    MOV BL, 10
+    DIV BL              ; AL = Tens, AH = Ones
+    MOV CL, AH          ; Ones ko temporary CL mein safe kiya
+
+    ; Tens Digit Print Karo
+    MOV DL, AL
+    ADD DL, '0'         ; ASCII mein badla
+    MOV AH, 02h
+    INT 21h
+
+    ; Ones Digit Print Karo
+    MOV DL, CL
+    ADD DL, '0'         ; ASCII mein badla
+    MOV AH, 02h
+    INT 21h
+
+    ; --- Program Exit ---
+    MOV AH, 4Ch
+    INT 21h
+
+
+; =========================================================
+; DATA SECTION (Variables)
+; =========================================================
+NUM      DW 43          ; Hamara asli number (Decimal 43)
+QUOTIENT DB ?           ; Quotient save karne ke liye variable
+
+
+
+
+
+
+//////divide and print quotient and decimal////////////
+org 100h
+
+MAIN:
+    ; --- 1. Division Perform Karna ---
+    MOV AX, [NUM1]      ; Jis number ko divide karna hai (Dividend = 29)
+    MOV BL, [NUM2]      ; Jis se divide karna hai (Divisor = 6)
+    DIV BL              ; AX / BL (29 / 6)
+                        ; AL = Quotient, AH = Remainder
+
+    ; --- 2. Jawab ko Variables me Save Karna ---
+    MOV [QUOT], AL      ; Quotient (4) ko save kiya
+    MOV [REMA], AH      ; Remainder (5) ko save kiya
+
+    ; --- 3. Screen par Display karna ---
+    ; Pehle Quotient display karte hain
+    MOV AL, [QUOT]
+    CALL PRINT_DEC_BYTE
+    
+    ; Beech mein space dene ke liye
+    CALL PRINT_SPACE
+    
+    ; Phir Remainder display karte hain
+    MOV AL, [REMA]
+    CALL PRINT_DEC_BYTE
+
+    ; --- Program Exit ---
+    MOV AH, 4Ch
+    INT 21h
+
+
+; =========================================================
+; SUBROUTINES (Decimal Printing & Formatting Functions)
+; =========================================================
+PRINT_DEC_BYTE:
+    ; Ye function AL ki value ko 2 decimal digits me torta aur print karta hai
+    MOV AH, 0
+    MOV BL, 10
+    DIV BL              ; AL = Tens, AH = Ones
+    MOV CL, AH          ; Ones ko temporary CL me safe kiya
+
+    ; Tens digit print karo
+    MOV DL, AL
+    ADD DL, '0'
+    MOV AH, 02h
+    INT 21h
+
+    ; Ones digit print karo
+    MOV DL, CL
+    ADD DL, '0'
+    MOV AH, 02h
+    INT 21h
+    RET
+
+PRINT_SPACE:
+    ; Dono answers ke beech dash '-' aur spaces daalne ke liye
+    MOV DL, ' '
+    MOV AH, 02h
+    INT 21h
+    MOV DL, '-'
+    INT 21h
+    MOV DL, ' '
+    INT 21h
+    RET
+
+
+; =========================================================
+; DATA SECTION (Variables)
+; =========================================================
+NUM1 DW 29              ; Dividend (29)
+NUM2 DB 6               ; Divisor (6)
+
+QUOT DB ?               ; Quotient save karne ki jagah
+REMA DB ?               ; Remainder save karne ki jagah
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+/////array sum and printing /////////
+.MODEL SMALL
+.STACK 100H
+.DATA
+    ; Define a 1D array with 5 elements
+    ARRAY DB 10, 20, 15, 5, 12
+    
+    ; Messages for display
+    MSG1 DB 'Array Elements: $'
+    MSG2 DB 0Dh, 0Ah, 'Total Sum: $' ; 0Dh, 0Ah se newline banti hai
+    
+    ; Variable to store final sum
+    TOTAL_SUM DB ?
+
+.CODE
+MAIN PROC
+    MOV AX, @DATA       ; Initialize Data Segment
+    MOV DS, AX
+
+    ; =========================================================
+    ; SECTION 1: ARRAY ELEMENTS DISPLAY KARNA
+    ; =========================================================
+    ; Display first message
+    LEA DX, MSG1
+    MOV AH, 09H
+    INT 21H
+
+    ; Initialize counter and pointer
+    MOV CX, 5           ; Number of elements
+    MOV SI, 0           ; SI points to first element
+
+DISPLAY_LOOP:
+    MOV AL, ARRAY[SI]   ; Load ARRAY[SI] into AL
+    
+    ; Chunki numbers 2-digits ke hain (jaise 10, 20), hum direct 30H plus nahi 
+    ; kar sakte. Isliye hum 10 se divide karke dono digits alag karenge.
+    MOV AH, 0
+    MOV BL, 10
+    DIV BL              ; AL = Tens, AH = Ones
+    MOV BH, AH          ; Ones digit ko BH me safe kiya
+
+    ; Tens digit print karo
+    MOV DL, AL
+    ADD DL, 30H         ; Convert to ASCII
+    MOV AH, 02H
+    INT 21h
+
+    ; Ones digit print karo
+    MOV DL, BH
+    ADD DL, 30H         ; Convert to ASCII
+    MOV AH, 02H
+    INT 21h
+
+    ; Space print karo after number
+    MOV DL, ' ' 
+    MOV AH, 02H
+    INT 21H
+
+    INC SI              ; Move to next element
+    LOOP DISPLAY_LOOP   ; Decrease CX and repeat if not zero
+
+
+    ; =========================================================
+    ; SECTION 2: SUM CALCULATE KARNA
+    ; =========================================================
+    MOV CX, 5           ; Reset counter
+    MOV SI, 0           ; Reset pointer
+    MOV AL, 0           ; AL ko clear kiya, isme sum jama hoga
+
+SUM_LOOP:
+    ADD AL, ARRAY[SI]   ; Current element ko AL me plus kiya
+    INC SI              ; Move to next element
+    LOOP SUM_LOOP       ; Repeat till CX = 0
+
+    MOV TOTAL_SUM, AL   ; Final sum (62) ko variable me store kiya
+
+
+    ; =========================================================
+    ; SECTION 3: TOTAL SUM DISPLAY KARNA
+    ; =========================================================
+    ; Display second message
+    LEA DX, MSG2
+    MOV AH, 09H
+    INT 21H
+
+    ; Total sum ko decimal me badal kar print karna
+    MOV AL, TOTAL_SUM
+    MOV AH, 0
+    MOV BL, 10
+    DIV BL              ; AL = Tens (6), AH = Ones (2)
+    MOV BH, AH          ; Ones safe kiya in BH
+
+    ; Tens digit print
+    MOV DL, AL
+    ADD DL, 30H
+    MOV AH, 02H
+    INT 21H
+
+    ; Ones digit print
+    MOV DL, BH
+    ADD DL, 30H
+    MOV AH, 02H
+    INT 21H
+
+    ; Exit program
+    MOV AH, 4CH 
+    INT 21H
+MAIN ENDP
+END MAIN
+
+
+
+
+
+
+
+
+
+//////fibonaechi///////////////
+.MODEL SMALL
+.STACK 100H
+.DATA
+    MSG1 DB 'Fibonacci Series: $'
+    
+    ; Initial Values
+    FIRST  DB 0         ; Pehla number = 0
+    SECOND DB 1         ; Doosri number = 1
+
+.CODE
+MAIN PROC
+    MOV AX, @DATA       ; Data segment ko initialize kiya
+    MOV DS, AX
+
+    ; Display Message
+    LEA DX, MSG1
+    MOV AH, 09H
+    INT 21H
+
+    ; Loop counter ko shuru se hi 7 set kiya taake sirf single digits print hon
+    MOV CX, 7
+
+PRINT_FIBO:
+    ; --- 1. Current number (FIRST) ko screen par display karna ---
+    MOV DL, FIRST       ; Number ko DL me laya
+    ADD DL, 30H         ; Convert number to ASCII character
+    MOV AH, 02H         ; DOS display character function
+    INT 21H
+
+    ; Space print karo number ke baad
+    MOV DL, ' '
+    MOV AH, 02H
+    INT 21H
+
+    ; --- 2. Agla Fibonacci number calculate karna ---
+    ; Formula: Next = FIRST + SECOND
+    MOV AL, FIRST
+    ADD AL, SECOND      ; AL = FIRST + SECOND
+    
+    ; Values ko aage sarakana (Shift values for next iteration)
+    MOV BL, SECOND
+    MOV FIRST, BL       ; FIRST ban gaya purana SECOND
+    MOV SECOND, AL      ; SECOND ban gaya naya calculated number
+
+    LOOP PRINT_FIBO     ; CX automatic 1 minus hoga aur 7 dafa chal kar ruk jayega
+
+    ; Exit program
+    MOV AH, 4CH
+    INT 21H
+MAIN ENDP
+END MAIN
+
+
+
+
+
+
+/////////factorial using loop////////
+.MODEL SMALL
+.DATA
+    NUM DB 0          ; Is number ka factorial nikalna hai (Aap check karne ke liye 0 ya 5 rakh sakte hain)
+    RESULT DB 1       ; Initialize result as 1 (0! automatic 1 hi rahega)
+
+.CODE 
+MAIN PROC
+    MOV AX, @DATA
+    MOV DS, AX
+
+    MOV AL, NUM       ; Load number into AL
+    
+    ; --- Lab Task Modification: Zero Check ---
+    CMP AL, 0         ; Check kiya ke shuruati number zero hai ya nahi
+    JE END_FACTORIAL  ; JE = Jump if Equal. Agar number 0 hai, to seedha end par jao (RESULT = 1 hi rahega)
+
+    MOV BL, AL        ; Copy number into BL
+    DEC BL            ; Start from (n-1)
+
+FACTORIAL_LOOP:
+    CMP BL, 1
+    JL END_FACTORIAL  ; If BL < 1, exit loop
+
+    MUL BL            ; Multiply AL = AL * BL
+    DEC BL            ; BL = BL - 1
+    JMP FACTORIAL_LOOP ; Unconditionally jump back
+
+END_FACTORIAL:
+    MOV RESULT, AL    ; Save the final result
+
+    MOV AH, 4CH
+    INT 21H
+MAIN ENDP
+END MAIN
+
+
+
+
+
+
+//////table/////
+ORG 100h
+
+.DATA
+    num      DB 5        ; Table of 5
+    count    DB 1        ; Multiplier (1 to 10)
+    
+    msg_mul  DB ' x $'
+    msg_eq   DB ' = $'
+    
+    ; Stack ke badle data safe rakhne ke liye temporary variable
+    temp_al  DB ?
+
+.CODE
+main PROC
+    MOV AX, @DATA
+    MOV DS, AX
+
+table_loop:
+    ; 1. Pehla number print karo (5)
+    MOV DL, num
+    ADD DL, '0'          
+    MOV AH, 02h
+    INT 21h
+
+    ; 2. ' x ' print karo
+    MOV DX, OFFSET msg_mul
+    MOV AH, 09h
+    INT 21h
+
+    ; 3. Current multiplier count print karo
+    MOV AL, count
+    CALL print_num       
+
+    ; 4. ' = ' print karo
+    MOV DX, OFFSET msg_eq
+    MOV AH, 09h
+    INT 21h
+
+    ; 5. Multiplication karo (num * count)
+    MOV AL, num          
+    MOV BL, count        
+    MUL BL               ; Result AX mein aayega (Chunki numbers chote hain, result sirf AL mein hoga)
+
+    ; 6. Result print karo
+    CALL print_num
+
+    ; 7. Newline print karo
+    MOV DL, 0Dh          
+    MOV AH, 02h
+    INT 21h
+    MOV DL, 0Ah          
+    INT 21h
+
+    ; --- LOOP & JUMP LOGIC ---
+    INC count            ; count = count + 1
+    CMP count, 11        ; Kya 10 tak table poora hua?
+    JNE table_loop       ; Agar nahi hua, toh wapas loop par jao
+
+    ; Program Termination
+    MOV AH, 4Ch
+    INT 21h
+main ENDP
+
+
+; =======================================================
+; FUNCTION: PRINT 2-DIGIT NUMBER (NO STACK VERSION)
+; =======================================================
+print_num PROC
+    ; AL register ki value ko bina stack ke print karne ke liye
+    MOV temp_al, AL      ; AL ki original value memory mein save kar li
+    
+    MOV AH, 0            ; AX ko clear kiya
+    MOV BL, 10
+    DIV BL               ; AX / 10 -> AL = Tens, AH = Units
+    
+    MOV BL, AH           ; Units digit ko BL mein save kiya
+    MOV DL, AL           ; Tens digit ko DL mein dala
+
+    ; Agar Tens digit 0 hai (jaise numbers 1 se 9 tak), toh use skip karo
+    CMP DL, 0
+    JE print_units
+    
+    ; Tens digit print karo
+    ADD DL, '0'
+    MOV AH, 02h
+    INT 21h
+
+print_units:
+    ; Units digit print karo
+    MOV DL, BL
+    ADD DL, '0'
+    MOV AH, 02h
+    INT 21h
+
+    MOV AL, temp_al      ; AL ki original value memory se wapas le aaye (Bina POP ke)
+    RET
+print_num ENDP
+
+END main
+
+
+
+
+
+/////counting////////
+ORG 100h
+
+.CODE
+main PROC
+    MOV DL, '1'         ; Counting '1' se shuru karein
+
+counting_loop:
+    ; 1. Current number print karo
+    MOV AH, 02h
+    INT 21h
+
+    ; 2. Number ko 1 se badhao ('1' ban jayega '2', fir '3'...)
+    INC DL              
+
+    ; 3. Check karo kya '9' se upar nikal gaye?
+    CMP DL, '9'         
+    JBE counting_loop   ; Jump if Below or Equal: Agar '9' tak hai toh wapas chalao
+
+    ; Program khatam
+    MOV AH, 4Ch
+    INT 21h
+main ENDP
+END main
+print_units:
+    ; Units digit print karo
+    MOV DL, BL
+    ADD DL, '0'
+    MOV AH, 02h
+    INT 21h
+
+    MOV AL, temp_al     ; Value wapas le aaye
+    RET
+print_num ENDP
+
+; --- DATA STORAGE FOR REGISTERS ---
+temp_al DB ?
+
+END main
+
+
+
+
+
+//////reverse a string//////////////
+.MODEL SMALL
+.stack 100h
+.data
+    msg1 db 'Enter$ '
+    msg2 db 0ah,0dh,'reverse $'
+    buffer db 30 dup(0)
+    
+    
+.code
+main:
+    mov ax,@data
+    mov ds,ax
+    
+    
+    lea dx,msg1
+    mov ah,09h
+    int 21h
+    
+    lea si,buffer
+    mov cx,0
+    
+    
+   input_loop:
+   mov ah,01h
+   int 21h
+   
+   cmp al,0dh
+   je done_input
+   
+   mov [si],al
+   inc si
+   inc cx
+   jmp input_loop
+   
+ done_input:
+    lea dx,msg2
+    mov ah,09h
+    int 21h   
+    
+    cmp cx,0
+    je exit_program
+    
+    lea si,buffer
+    mov bx,cx
+    
+push_loop:
+
+    mov al,[si]
+    xor ah,ah
+    push ax
+    inc si
+    dec bx
+    jnz push_loop
+    
+print:
+    pop dx
+    mov ah,02h
+    int 21h
+    dec cx
+    jnz print
+    
+exit_program :
+hlt
+    
+
+
+
+///////addition using stack and procedure/////////////
+.MODEL SMALL
+.STACK 100H
+.DATA
+    msg    DB 'The Sum is: $'
+    result DW ?                  ; Result ko store karne ke liye variable
+    
+    ; Result ko decimal character mein badalne ke liye temporary variables
+    d1     DB ?
+    d2     DB ?
+
+.CODE
+MAIN PROC
+    MOV AX, @DATA
+    MOV DS, AX
+
+    ; --- Step 1: Push two numbers onto the stack ---
+    MOV AX, 5
+    PUSH AX                      ; First Number (5) pushed
+    
+    MOV AX, 8
+    PUSH AX                      ; Second Number (8) pushed
+
+    ; --- Step 2: Call the procedure ---
+    CALL add_numbers
+
+    ; --- Step 3: After return, pop result into a variable ---
+    POP result                   ; Procedure ne jo result push kiya tha, use variable me nikala
+
+    ; --- Step 4: Display the result ---
+    ; Display Text Message
+    LEA DX, msg
+    MOV AH, 09H
+    INT 21H
+
+    ; Numbers ko decimal mein convert karke print karne ka simple tareeka (5+8 = 13)
+    MOV AX, result
+    MOV BL, 10
+    DIV BL                       ; AX / 10 -> AL = 1 (Tens), AH = 3 (Units)
+    
+    MOV d1, AL                   ; Tens digit '1'
+    MOV d2, AH                   ; Units digit '3'
+
+    ; Print Tens Digit
+    MOV DL, d1
+    ADD DL, '0'
+    MOV AH, 02H
+    INT 21H
+
+    ; Print Units Digit
+    MOV DL, d2
+    ADD DL, '0'
+    MOV AH, 02H
+    INT 21H
+
+exit_program:
+    ; DOS Terminate
+    MOV AH, 4CH
+    INT 21H
+MAIN ENDP
+
+
+; =======================================================
+; PROCEDURE: ADD TWO NUMBERS USING STACK MANAGEMENT
+; =======================================================
+add_numbers PROC
+    ; Stack Order right now (Top to Bottom):
+    ; [ Return Address (IP) ]  <- Current SP points here
+    ; [ Second Number (8)   ]
+    ; [ First Number (5)    ]
+
+    POP BX                       ; 1. Pehle Return Address ko BX register mein nikal kar safe kiya
+    
+    POP CX                       ; 2. Second Number (8) ko CX mein nikala
+    POP AX                       ; 3. First Number (5) ko AX mein nikala
+
+    ADD AX, CX                   ; 4. Dono ko add kiya (5 + 8 = 13). Result AX mein aaya.
+
+    PUSH AX                      ; 5. Result (13) ko stack par push kiya
+
+    PUSH BX                      ; 6. Return Address (BX) ko wapas TOP par push kiya taaki RET kaam kar sake
+    
+    RET                          ; 7. Return to MAIN
+add_numbers ENDP
+
+END MAIN
+
+
+
+
+
+
+//////square using procedure and stack////////
+.MODEL SMALL
+.STACK 100H
+.DATA
+    msg    DB 'The Square is: $'
+    result DW ?                  ; Result store karne ke liye variable
+    
+    ; Decimal conversion ke liye temporary digits
+    d1     DB ?
+    d2     DB ?
+
+.CODE
+MAIN PROC
+    MOV AX, @DATA
+    MOV DS, AX
+
+    ; --- Step 1: Push the number onto the stack ---
+    MOV AX, 4
+    PUSH AX                      ; Number (4) pushed to stack
+
+    ; --- Step 2: Call the procedure ---
+    CALL square_number
+
+    ; --- Step 3: After return, pop result into a variable ---
+    POP result                   ; Procedure ne jo square push kiya tha, use nikal liya
+
+    ; --- Step 4: Display the result in decimal (16) ---
+    ; Display Message Text
+    LEA DX, msg
+    MOV AH, 09H
+    INT 21H
+
+    ; Number ko 2 digits mein split karne ka logic (16 / 10)
+    MOV AX, result
+    MOV BL, 10
+    DIV BL                       ; AX / 10 -> AL = 1 (Tens), AH = 6 (Units)
+    
+    MOV d1, AL                   ; Tens digit '1'
+    MOV d2, AH                   ; Units digit '6'
+
+    ; Print Tens Digit ('1')
+    MOV DL, d1
+    ADD DL, '0'                  ; ASCII conversion
+    MOV AH, 02H
+    INT 21H
+
+    ; Print Units Digit ('6')
+    MOV DL, d2
+    ADD DL, '0'                  ; ASCII conversion
+    MOV AH, 02H
+    INT 21H
+
+exit_program:
+    ; DOS Terminate
+    MOV AH, 4CH
+    INT 21H
+MAIN ENDP
+
+
+; =======================================================
+; PROCEDURE: SQUARE A NUMBER WITH STACK MANAGEMENT
+; =======================================================
+square_number PROC
+    ; Stack Order right now (Top to Bottom):
+    ; [ Return Address (IP) ]  <- SP points here
+    ; [ Input Number (4)    ]
+
+    POP BX                       ; 1. Pehle Return Address ko BX mein nikal kar safe kiya
+    POP AX                       ; 2. Input Number (4) ko AX register mein nikala
+
+    ; Hint ke mutabik: MUL AX karne se AX * AX hota hai
+    ; Result automatic DX:AX mein jata hai (Chunki number chota hai, result sirf AX mein hoga)
+    MUL AX                       ; 3. AX = 4 * 4 = 16
+
+    PUSH AX                      ; 4. Result (16) ko stack par push kiya
+    PUSH BX                      ; 5. Return Address (BX) ko wapas TOP par push kiya
+    
+    RET                          ; 6. Return to MAIN
+square_number ENDP
+
+END MAIN
+
+
+
+
+
+
+
+
+
+
+
+
+
+//////swap using stack//////////////
+ .MODEL SMALL
+.STACK 100H
+.DATA
+    msg1 db 'After Swap, First Number: $'
+    msg2 db 0dh,0ah,'After Swap, Second Number: $'
+
+.CODE
+MAIN PROC
+    MOV AX, @DATA
+    MOV DS, AX
+
+    ; --- Step 1: Push two numbers onto the stack ---
+    MOV AX, 7
+    PUSH AX                      ; First Number (7) pushed
+    
+    MOV AX, 3
+    PUSH AX                      ; Second Number (3) pushed
+
+    ; --- Step 2: Call the procedure to swap ---
+    CALL swap_numbers
+
+    ; --- Step 3: After return, pop and display swapped numbers ---
+    ; Ab stack ke top par 7 hoga aur uske neeche 3 (Swap ho chuke hain!)
+    
+    POP BX                       ; Pehla swapped number nikala (Ab BX = 7)
+    POP CX                       ; Doosra swapped number nikala (Ab CX = 3)
+
+    ; First Number Print Karo (7)
+    LEA DX, msg1
+    MOV AH, 09H
+    INT 21H
+    
+    MOV DL, BL                   ; BX ki value DL mein dali
+    ADD DL, '0'                  ; ASCII character banaya
+    MOV AH, 02H
+    INT 21H
+
+    ; Second Number Print Karo (3)
+    LEA DX, msg2
+    MOV AH, 09H
+    INT 21H
+    
+    MOV DL, CL                   ; CX ki value DL mein dali
+    ADD DL, '0'
+    MOV AH, 02H
+    INT 21H
+
+exit_program:
+    MOV AH, 4CH
+    INT 21H
+MAIN ENDP
+
+
+; =======================================================
+; PROCEDURE: SWAP NUMBERS USING ONLY STACK & REGISTERS
+; =======================================================
+swap_numbers PROC
+    ; Shuruat mein Stack (Top to Bottom):
+    ; [ Return Address (IP) ]
+    ; [ Second Number (3)   ]
+    ; [ First Number (7)    ]
+
+    POP DX                       ; 1. Return Address ko DX mein nikal kar safe kiya
+    
+    ; Hint ke mutabik: Dono numbers ko temporary registers mein nikala
+    POP AX                       ; 2. Second Number (3) ko AX mein nikala
+    POP BX                       ; 3. First Number (7) ko BX mein nikala
+
+    ; --- SWAP MAGIC: Reverse order mein wapas push kiya ---
+    PUSH AX                      ; 4. Pehle 3 ko push kiya (Ab yeh bottom par chala gaya)
+    PUSH BX                      ; 5. Fir 7 ko push kiya (Ab yeh top par aa gaya)
+
+    PUSH DX                      ; 6. Return Address (DX) ko wapas TOP par rakha
+    
+    RET                          ; 7. Return to MAIN
+swap_numbers ENDP
+
+END MAIN
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+//////countdown 5////////
+org 100h
+
+.code
+main PROC
+    mov cx, 5         ; Initialize counter to 5
+
+countdown:            ; FIXED: Label ko alag aur sahi line par kiya
+    ; --- 1. Number ko ASCII mein convert karke print karo ---
+    add cl, '0'       ; FIXED: HTML entity ko (') mein badla
+    mov dl, cl
+    mov ah, 02h
+    int 21h           ; Display the number
+
+    ; --- 2. Calculation ke liye wapas number mein badlo ---
+    sub cl, '0'       ; FIXED: Instruction ko alag line par kiya
+
+    ; --- 3. Newline (Agli line par jaane ke liye) ---
+    mov ah, 02h
+    mov dl, 0Dh       ; Carriage Return (Cursor ko line ke shuru me lane ke liye)
+    int 21h
+    mov dl, 0Ah       ; Line Feed (Agli line par jaane ke liye)
+    int 21h
+
+    ; --- 4. Loop Logic ---
+    loop countdown    ; Loop automatic CX ko 1 kam karega aur check karega
+
+    ; --- 5. Program Exit ---
+    mov ah, 4Ch 
+    int 21h
+main ENDP
+end main
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+/////////	print graetest of array////////////////////
+org 100h
+
+; =======================================================
+; DATA SECTION: VARIABLES AUR MEMORY RESERVATION
+; =======================================================
+.DATA
+    array   db 5, 9, 2, 7, 13, 8      ; Elements ka array jisme se max dhoondna hai
+    n       equ 6                     ; Constant: Array ke kul elements ki tadad (Size = 6)
+    buffer  db 6 dup('$')             ; ASCII digits store karne ke liye temporary string/buffer
+    newline db 0Dh, 0Ah, '$'          ; Newline characters (0Dh = Carriage Return, 0Ah = Line Feed)
+    result  dw 0                      ; Final maximum number ko save karne ke liye 16-bit variable
+
+; =======================================================
+; CODE SECTION: ACTUAL PROGRAM LOGIC
+; =======================================================
+.CODE
+main PROC
+    ; --- Data Segment (DS) ko Initialize karna ---
+    mov ax, @data                     ; Data segment ka base address AX mein load kiya
+    mov ds, ax                        ; Use DS register mein transfer kiya (Zaroori step)
+
+    ; --- Loop aur Indexing ki Shuruat ---
+    mov cx, n                         ; Counter register CX = 6 set kiya (Pore array ke liye)
+    mov si, 0                         ; Source Index SI = 0 kiya (Array ke pehle element par point karne ke liye)
+
+    ; --- Pehle Element ko Maximum Maanna ---
+    mov al, [array+si]                ; Pehle element (5) ko uthakar AL mein dala aur Maan liya yahi Max hai
+    inc si                            ; SI ko 1 se badhaya (Ab SI point kar raha hai doosre element yani 9 par)
+    dec cx                            ; CX ko 1 kam kiya (Kyunki 1st element check ho chuka hai, ab bache 5 elements)
+
+find_max:
+    ; --- Array ke baaki elements se Compare karne ka loop ---
+    mov bl, [array+si]                ; Agla element (SI jahan point kar raha hai) use BL register mein load kiya
+    cmp bl, al                        ; BL (New Element) ko AL (Current Max) se compare kiya (BL - AL)
+    jle skip_update                   ; Jump if Less or Equal: Agar naya element chota ya barabar hai, toh update mat karo
+
+    ; --- Agar naya element bada hai, toh Max update karo ---
+    mov al, bl                        ; Agar BL bada hai, toh use AL mein daal do (Ab naya Max AL mein aa gaya)
+
+skip_update:
+    inc si                            ; Index (SI) ko 1 se badhao taaki agle element par ja sakein
+    loop find_max                     ; Loop automatic CX ko 1 kam karega. Agar CX != 0, toh 'find_max' par wapas koodega
+
+    ; =======================================================
+    ; LOOP KHATAM: Ab AL register ke andar sabse bada number (13) hai
+    ; =======================================================
+
+    mov ah, 0                         ; AH register ko 0 kiya taaki AX mein koi purana kachra (garbage) na rahe
+    mov result, ax                    ; Final maximum value (AX) ko 'result' variable mein save kar diya
+
+    ; --- Result ko Decimal mein Print karne ke liye Function Call ---
+    call display_result               ; 'display_result' procedure ko pukara (call kiya)
+
+    ; --- DOS Terminal se Program safely exit karne ka code ---
+    mov ah, 4Ch                       ; DOS terminate program function
+    int 21h                           ; Control Operating System ko wapas de diya
+main ENDP
+
+
+; =======================================================
+; PROCEDURE: 16-BIT REGISTER VALUE KO DECIMAL MEIN PRINT KARNA
+; =======================================================
+display_result PROC
+    ; --- Newline print karo ---
+    lea dx, newline                   ; Newline string ka address DX mein load kiya
+    mov ah, 09h                       ; DOS String display function
+    int 21h                           ; Agli khali line par jaane ke liye execute kiya
+
+    ; --- Binary/Hex se Decimal Conversion Logic (Using Division) ---
+    mov ax, result                    ; 'result' variable (13) ko wapas AX register mein load kiya
+    mov cx, 0                         ; CX = 0 kiya (Yeh ginega ki total kitne digits bane hain)
+    lea si, buffer+5                  ; Buffer ke aakhri kone (End) par SI ko set kiya kyunki digits ulte store hote hain
+
+convert_loop: 
+    xor dx, dx                        ; DX ko completely 0 kiya (Division se pehle DX:AX clear hona zaroori hai)
+    mov bx, 10                        ; Divisor BL/BX = 10 set kiya
+    div bx                            ; DX:AX ko 10 se divide kiya -> AL = Quotient (1), DX = Remainder (3)
+    
+    add dl, '0'                       ; Remainder (DL) mein '0' (48) add karke use ASCII character banaya ('3')
+    dec si                            ; Buffer mein ek kadam peeche (Left side) move kiya
+    mov [si], dl                      ; Uskis jagah par ASCII character save kar diya
+    inc cx                            ; Digit counter (CX) ko 1 se badha diya
+    
+    cmp ax, 0                         ; Check kiya kya abhi bhi Quotient (AX) bacha hai?
+    jne convert_loop                  ; Jump if Not Equal: Agar AX abhi 0 nahi hua, toh dobara divide karo
+
+    ; --- Convert kiye huye Digits ko Screen par Print karna ---
+    mov ah, 02h                       ; DOS Single character display function set kiya
+print_loop: 
+    mov dl, [si]                      ; Buffer se ek character (Pehle Tens fir Units) DL mein uthaya
+    int 21h                           ; Use screen par print kar diya
+    inc si                            ; SI ko aage badhaya agle digit ke liye
+    loop print_loop                   ; Jitne digits bane the (CX), utni baar chala kar loop khatam kiya
+
+    ret                               ; Procedure se wapas main program mein jane ke liye
+display_result ENDP
+
+end main
+
+
+
+
+
+
+
+
+
+
+
+
+
+//////5 numbers array all in one user input max min sum///////
+ORG 100h
+
+.DATA
+    ; User se inputs lene ke liye messages
+    msg_input DB 'Enter 5 single-digit numbers (0-9): ', 0Dh, 0Ah, '$'
+    msg_max   DB 0Dh, 0Ah, 'Maximum Number is: $'
+    msg_min   DB 0Dh, 0Ah, 'Minimum Number is: $'
+    msg_sum   DB 0Dh, 0Ah, 'Sum of Elements is: $'
+    
+    ; 5 elements ka khali array aur size definition
+    array     DB 5 DUP(0)
+    n         EQU 5
+
+.CODE
+main PROC
+    MOV AX, @DATA
+    MOV DS, AX
+
+    ; --- 1. User ko Input Prompt dikhao ---
+    LEA DX, msg_input
+    MOV AH, 09h
+    INT 21h
+
+    ; --- 2. Array Input Loop (User se 5 numbers lena) ---
+    MOV CX, n
+    MOV SI, 0
+input_loop:
+    MOV AH, 01h              ; Single character input (Result AL mein aayega)
+    INT 21h
+    
+    SUB AL, '0'              ; ASCII character ko actual number mein badla
+    MOV [array+SI], AL       ; Number ko array mein save kiya
+    INC SI
+    LOOP input_loop
+
+    ; --- 3. Initial Setup: Pehle Element ko hi Max aur Min Maan lo ---
+    MOV SI, 0
+    MOV AL, [array+SI]       ; AL ko Max bana diya
+    MOV AH, [array+SI]       ; AH ko Min bana diya
+    MOV BL, [array+SI]       ; BL mein Sum (Total) start kiya
+    
+    INC SI
+    MOV CX, n
+    DEC CX                   ; Pehla element check ho gaya, ab bache 4 elements
+
+; --- 4. Main Processing Loop (Find Max, Min, and Sum) ---
+process_loop:
+    MOV DL, [array+SI]       ; Current element DL mein load kiya
+    
+    ; Sum Calculation
+    ADD BL, DL               ; BL = BL + DL (Total Sum accumulator)
+
+    ; Max Check
+    CMP DL, AL
+    JLE check_min            ; Agar DL <= AL, toh Max update skip karo
+    MOV AL, DL               ; Naya Max AL mein save kiya
+    JMP skip_min             ; Agar naya max mil gaya, toh woh min nahi ho sakta
+
+check_min:
+    ; Min Check
+    CMP DL, AH
+    JGE skip_min             ; Agar DL >= AH, toh Min update skip karo
+    MOV AH, DL               ; Naya Min AH mein save kiya
+
+skip_min:
+    INC SI
+    LOOP process_loop
+
+    ; --- Registers state right now: AL = Max, AH = Min, BL = Sum ---
+    ; Inhe registers mein safe rakhne ke liye move karte hain
+    MOV CH, AL               ; CH = Max
+    MOV CL, AH               ; CL = Min
+    MOV BH, BL               ; BH = Sum
+
+    ; =======================================================
+    ; DISPLAY SECTION (Using Bit Manipulation / Direct Print)
+    ; =======================================================
+
+    ; --- 1. MAX PRINT KARNA ---
+    LEA DX, msg_max
+    MOV AH, 09h
+    INT 21h
+    MOV DL, CH               ; Max value DL mein layi
+    ADD DL, '0'              ; ASCII banaya
+    MOV AH, 02h
+    INT 21h
+
+    ; --- 2. MIN PRINT KARNA ---
+    LEA DX, msg_min
+    MOV AH, 09h
+    INT 21h
+    MOV DL, CL               ; Min value DL mein layi
+    ADD DL, '0'              ; ASCII banaya
+    MOV AH, 02h
+    INT 21h
+
+    ; --- 3. SUM PRINT KARNA (Can be 2 digits, e.g., 9+9+9+9+9 = 45) ---
+    LEA DX, msg_sum
+    MOV AH, 09h
+    INT 21h
+
+    MOV AL, BH               ; Sum value AX mein layi (Kyunki BH mein total sum tha)
+    MOV AH, 0
+    MOV DL, 10
+    DIV DL                   ; AX / 10 -> AL = Tens Digit, AH = Units Digit
+
+    MOV BX, AX               ; Result register mein save kiya (BL = Tens, BH = Units)
+
+    ; Tens Digit Print (Using dynamic check)
+    CMP BL, 0
+    JE print_units_sum       ; Agar Tens digit 0 hai (Sum < 10), toh direct units par jao
+    MOV DL, BL
+    ADD DL, '0'
+    MOV AH, 02h
+    INT 21h
+
+print_units_sum:
+    ; Units Digit Print
+    MOV DL, BH
+    ADD DL, '0'
+    MOV AH, 02h
+    INT 21h
+
+exit_program:
+    ; --- Exit Program ---
+    MOV AH, 4Ch
+    INT 21h
+main ENDP
+END main
+
+
+
+
+
+
+
+
+/////average array///////////
+                                                                        ORG 100h
+
+.DATA
+    array   DB 4, 8, 3, 9, 6          ; 5 numbers ka array
+    n       DB 5                      ; Array ka size (N = 5)
+    msg_avg DB 'Average is: $'
+
+.CODE
+main PROC
+    MOV AX, @DATA
+    MOV DS, AX
+
+    MOV CL, n                         ; Counter CX mein dala
+    MOV CH, 0
+    MOV SI, 0
+    MOV BL, 0                         ; BL ko Sum accumulator banaya (Sum = 0)
+
+sum_loop:
+    ADD BL, [array+SI]                ; Har element ko BL mein plus karte gye
+    INC SI
+    LOOP sum_loop
+
+    ; --- Average = Total Sum / N ---
+    MOV AL, BL                        ; Total Sum ko AL mein dala
+    MOV AH, 0                         ; AH clear kiya division ke liye
+    DIV n                             ; AX / n -> AL = Average (Quotient)
+
+    MOV BL, AL                        ; Average ko BL mein safe kar liya
+
+    ; --- Print Message ---
+    LEA DX, msg_avg
+    MOV AH, 09h
+    INT 21h
+
+    ; --- Direct Print (Single Digit Average) ---
+    MOV DL, BL
+    ADD DL, '0'                       ; ASCII mein badla
+    MOV AH, 02h
+    INT 21h                           ; Screen par print kiya (e.g., 30 / 5 = 6)
+
+exit1:
+    MOV AH, 4Ch
+    INT 21h
+main ENDP
+END main
+
+
+
+
+
+
+
+
+
+////reverse array/////////////
+ORG 100h
+
+.DATA
+    array   DB 5, 2, 9, 1, 7          ; Original Array
+    n       EQU 5                     ; Size
+    msg_rev DB 'Reverse Array: $'
+    space   DB ' $'
+
+.CODE
+main PROC
+    MOV AX, @DATA
+    MOV DS, AX
+
+    ; --- Print Message ---
+    LEA DX, msg_rev
+    MOV AH, 09h
+    INT 21h
+
+    MOV CX, n                         ; Counter = 5
+    MOV SI, n
+    DEC SI                            ; SI = 4 (Kyunki 5 elements ka last index 4 hota hai)
+
+reverse_loop:
+    MOV DL, [array+SI]                ; Aakhri element se uthana shuru kiya
+    ADD DL, '0'                       ; ASCII banaya
+    MOV AH, 02h
+    INT 21h                           ; Print element
+
+    ; Space print karne ke liye
+    LEA DX, space
+    MOV AH, 09h
+    INT 21h
+
+    DEC SI                            ; Index ko 1 kam kiya (Peeche ki taraf move karne ke liye)
+    LOOP reverse_loop                 ; 5 baar chalega
+
+exit2:
+    MOV AH, 4Ch
+    INT 21h
+main ENDP
+END main
+
+
+
+//////search in array////////
+ORG 100h
+
+.DATA
+    array     DB 5, 3, 8, 2, 9        ; Array jisme search karna hai
+    n         EQU 5
+    search_for DB 2                   ; Jis number ko dhoondna hai (Hum '2' dhoond rahe hain)
+    
+    msg_found DB 'Number Found!$'
+    msg_not   DB 'Number Not Found!$'
+
+.CODE
+main PROC
+    MOV AX, @DATA
+    MOV DS, AX
+
+    MOV CX, n                         ; Counter = 5
+    MOV SI, 0
+    MOV AL, search_for                ; AL mein woh number dala jo dhoondna hai
+
+search_loop:
+    CMP [array+SI], AL                ; Array ke current element ko AL se compare kiya
+    JE number_found                   ; JUMP IF EQUAL: Agar match ho gaya, toh loop se bahar kood jao
+    
+    INC SI                            ; Agar nahi mila, toh agle element par jao
+    LOOP search_loop                  ; Pura array check karo
+
+    ; --- Agar loop poora chal gaya aur match nahi hua, toh yeh chalega ---
+    LEA DX, msg_not
+    MOV AH, 09h
+    INT 21h
+    JMP exit3                         ; Direct exit par jao taaki found wala msg skip ho jaye
+
+number_found:
+    ; --- Agar JE call hua toh control yahan aayega ---
+    LEA DX, msg_found
+    MOV AH, 09h
+    INT 21h
+
+exit3:
+    MOV AH, 4Ch
+    INT 21h
+main ENDP
+END main
+
+
